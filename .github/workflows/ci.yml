@@ -3,7 +3,10 @@
 #different jobs run in parallel in separate vm
 
 name: CI #name of the workflow
-on: [push, pull_request] #it runs on push and pr
+on: #when the workflow runs
+  push:
+    branches: [main] #after something lands on main
+  pull_request: #on every PR, before it can be merged
 jobs: #define jobs
     build: #name of the job
         runs-on: ubuntu-latest #fresh linux vm for each run
