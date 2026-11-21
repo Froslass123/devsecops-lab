@@ -1,12 +1,27 @@
-name: CI
-on: [push, pull_request]
-jobs:
-  build:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
-      - run: pip install -r requirements.txt
-      - run: python -c "import app; print('ok')"
+#uses: run a pre-made action written by someone else
+#run: execute shell code
+#different jobs run in parallel in separate vm
+
+name: CI #name of the workflow
+on: [push, pull_request] #it runs on push and pr
+jobs: #define jobs
+    build: #name of the job
+        runs-on: ubuntu-latest #fresh linux vm for each run
+        steps: #ordered list of what the job does
+          - uses: actions/checkout@v4 #downloads the repo code onto the vm
+          - uses: actions/setup-python@v5 #downloads python (optional: specified version)
+            with:
+              python-version: "3.12"
+          - run: pip install -r requirements.txt #installs the dependencies
+          - run: python -c "import app; print('ok')"
+    secrets-scan: #name of the job
+        runs-on: ubuntu-latest
+        steps:
+          - uses: actions/checkout@v4
+            with:
+              fetch-depth: 0 #it checkouts the full history, to see if secret committed in the past
+          - uses: gitleaks/gitleaks-action@v2 #installs and runs gitleaks
+            env:
+              GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} #temporary token automatically created by github
+                                                        #The action uses it to read the repo and, on pull requests,
+                                                        #to post comments about findings
