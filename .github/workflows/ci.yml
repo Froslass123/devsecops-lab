@@ -20,8 +20,11 @@ jobs: #define jobs
           - uses: actions/checkout@v6
             with:
               fetch-depth: 0 #it checkouts the full history, to see if secret committed in the past
-          - uses: gitleaks/gitleaks-action@v3 #installs and runs gitleaks
-            env:
-              GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} #temporary token automatically created by github
+          #this only checks latest commit:
+          #- uses: gitleaks/gitleaks-action@v3 #installs and runs gitleaks
+          #  env:
+          #    GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} #temporary token automatically created by github
                                                         #The action uses it to read the repo and, on pull requests,
                                                         #to post comments about findings
+          #this checks full commit history:
+          - run: docker run --rm -v "$PWD:/repo" zricethezav/gitleaks:latest detect --source /repo -v
