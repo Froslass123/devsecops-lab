@@ -6,3 +6,9 @@ updates: #one entry per ecosystem to watch
       interval: "weekly" #check for new versions once a week
     cooldown:
       default-days: 7 #only propose releases at least 7 days old, so a compromised release has time to be caught
+  - package-ecosystem: "pip" #watch Python dependencies
+    directory: "/" #where requirements.in / requirements.txt live
+    schedule:
+      interval: "weekly"
+    cooldown:
+      default-days: 7 #same protection: skip releases younger than 7 days
