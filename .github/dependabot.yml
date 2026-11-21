@@ -1,0 +1,8 @@
+version: 2 #config format version, always 2
+updates: #one entry per ecosystem to watch
+  - package-ecosystem: "github-actions" #watch the "uses:" lines in workflows
+    directory: "/" #"/" means .github/workflows for this ecosystem
+    schedule:
+      interval: "weekly" #check for new versions once a week
+    cooldown:
+      default-days: 7 #only propose releases at least 7 days old, so a compromised release has time to be caught
