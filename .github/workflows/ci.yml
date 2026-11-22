@@ -7,6 +7,9 @@ on: #when the workflow runs
   push:
     branches: [main] #after something lands on main
   pull_request: #on every PR, before it can be merged
+  schedule:
+    - cron: "23 3 * * *" #every night at 03:23 UTC
+  workflow_dispatch: #adds a "Run workflow" button in the Actions tab, to start it by hand
 jobs: #define jobs
     build: #name of the job
         runs-on: ubuntu-latest #fresh linux vm for each run
