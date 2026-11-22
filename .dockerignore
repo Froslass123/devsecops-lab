@@ -1,0 +1,5 @@
+.git
+.github
+.venv
+*.exe
+__pycache__
