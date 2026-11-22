@@ -12,3 +12,9 @@ updates: #one entry per ecosystem to watch
       interval: "weekly"
     cooldown:
       default-days: 7 #same protection: skip releases younger than 7 days
+  - package-ecosystem: "docker" #watch FROM lines in Dockerfiles
+    directory: "/" #where the Dockerfile lives
+    schedule:
+      interval: "weekly"
+    cooldown:
+      default-days: 7
