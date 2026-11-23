@@ -4,72 +4,81 @@
 
 name: CI #name of the workflow
 on: #when the workflow runs
-  push:
-    branches: [main] #after something lands on main
-  pull_request: #on every PR, before it can be merged
-  schedule:
-    - cron: "23 3 * * *" #every night at 03:23 UTC
-  workflow_dispatch: #adds a "Run workflow" button in the Actions tab, to start it by hand
+    push:
+        branches: [main] #after something lands on main
+    pull_request: #on every PR, before it can be merged
+    schedule:
+        - cron: "23 3 * * *" #every night at 03:23 UTC
+    workflow_dispatch: #adds a "Run workflow" button in the Actions tab, to start it by hand
 jobs: #define jobs
     build: #name of the job
         runs-on: ubuntu-latest #fresh linux vm for each run
         steps: #ordered list of what the job does
-          - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-          - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
-            with:
-              python-version: "3.13"
-          #Runs to test if it builds
-          - run: pip install --require-hashes -r requirements.txt #installs the dependencies, requiring their hashes
-                                                                  #to avoid malicious builds
-          - run: python -c "import app; print('ok')"
-          #Runs to test if the app works correctly
-          - run: pip install --require-hashes -r requirements-dev.txt #test tools (pytest), hashes required here too
-          - run: python -m pytest -v #a failing test makes pytest exit 1, which fails the job
+            - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+            - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+              with:
+                  python-version: "3.13"
+            #Runs to test if it builds
+            - run: pip install --require-hashes -r requirements.txt #installs the dependencies, requiring their hashes
+                                                                    #to avoid malicious builds
+            - run: python -c "import app; print('ok')"
+            #Runs to test if the app works correctly
+            - run: pip install --require-hashes -r requirements-dev.txt #test tools (pytest), hashes required here too
+            - run: python -m pytest -v tests --ignore=tests/test_container.py #a failing test makes pytest exit 1, which fails the job, test_container will be run inside image-scan
     secrets-scan: #name of the job
         runs-on: ubuntu-latest
         steps:
-          - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-            with:
-              fetch-depth: 0 #it checkouts the full history, to see if secret committed in the past
-          #this only checks latest commit:
-          #- uses: gitleaks/gitleaks-action@v3 #installs and runs gitleaks
-          #  env:
-          #    GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} #temporary token automatically created by github
-                                                        #The action uses it to read the repo and, on pull requests,
-                                                        #to post comments about findings
-          #this checks full commit history:
-          #image pinned by digest (immutable); the tag is only a readable label, Docker ignores it when a digest is present
-          - run: docker run --rm -v "$PWD:/repo" zricethezav/gitleaks:v8.30.1@sha256:c00b6bd0aeb3071cbcb79009cb16a60dd9e0a7c60e2be9ab65d25e6bc8abbb7f detect --source /repo -v
+            - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+              with:
+                  fetch-depth: 0 #it checkouts the full history, to see if secret committed in the past
+            #this only checks latest commit:
+            #- uses: gitleaks/gitleaks-action@v3 #installs and runs gitleaks
+            #  env:
+            #      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} #temporary token automatically created by github
+                                                             #The action uses it to read the repo and, on pull requests,
+                                                             #to post comments about findings
+            #this checks full commit history:
+            #image pinned by digest (immutable); the tag is only a readable label, Docker ignores it when a digest is present
+            - run: docker run --rm -v "$PWD:/repo" zricethezav/gitleaks:v8.30.1@sha256:c00b6bd0aeb3071cbcb79009cb16a60dd9e0a7c60e2be9ab65d25e6bc8abbb7f detect --source /repo -v
     dependency-scan:
         runs-on: ubuntu-latest
         steps:
-          - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-          - uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
-            env:
-                TRIVY_FILE_PATTERNS: 'pip:requirements-dev\.txt' #also check dependencies for our app testing environment, by default trivy only recognizes requirements.txt
-            with:
-                scan-type: fs #used to scan the file system, default is image
-                scan-ref: . #scan the current folder
-                scanners: vuln #only look for known vulnerabilities. Trivy can also look for secrets and misconfigurations; gitleaks already covers secrets.
-                severity: HIGH,CRITICAL #ignore LOW and MEDIUM vulnerabilities
-                exit-code: "1" #if anything is found, exit 1 and fail the job
+            - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+            - uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+              env:
+                  TRIVY_FILE_PATTERNS: 'pip:requirements-dev\.txt' #also check dependencies for our app testing environment, by default trivy only recognizes requirements.txt
+              with:
+                  scan-type: fs #used to scan the file system, default is image
+                  scan-ref: . #scan the current folder
+                  scanners: vuln #only look for known vulnerabilities. Trivy can also look for secrets and misconfigurations; gitleaks already covers secrets.
+                  severity: HIGH,CRITICAL #ignore LOW and MEDIUM vulnerabilities
+                  exit-code: "1" #if anything is found, exit 1 and fail the job
     sast:
         runs-on: ubuntu-latest
         steps:
-          - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-          #Static Application Security Testing with Semgrep for dangerous patterns: SQL injection, command injection, insecure settings etc.
-          - run: docker run --rm -v "$PWD:/src" semgrep/semgrep:1.186.0-nonroot@sha256:9e7a5ea2466f5a9b7f308a1c6087ced2626b988869d432b326668578abf60944 semgrep scan --config p/python --config p/flask --error --metrics=off
+            - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+            #Static Application Security Testing with Semgrep for dangerous patterns: SQL injection, command injection, insecure settings etc.
+            - run: docker run --rm -v "$PWD:/src" semgrep/semgrep:1.186.0-nonroot@sha256:9e7a5ea2466f5a9b7f308a1c6087ced2626b988869d432b326668578abf60944 semgrep scan --config p/python --config p/flask --error --metrics=off
     image-scan:
         runs-on: ubuntu-latest
         steps:
-          - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-          - run: docker build -t devsecops-lab:${{ github.sha }} .
-          - uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
-            with:
-                scan-type: image
-                image-ref: devsecops-lab:${{ github.sha }}
-                scanners: vuln,secret #we also check secrets with trivy inside images because gitleaks can't see
+            - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+            - run: docker build -t devsecops-lab:${{ github.sha }} .
+            - uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+              with:
+                  scan-type: image
+                  image-ref: devsecops-lab:${{ github.sha }}
+                  scanners: vuln,secret #we also check secrets with trivy inside images because gitleaks can't see
                                         #a secret baked inside an image
-                severity: HIGH,CRITICAL
-                ignore-unfixed: true #only report/fail on vulnerabilities that have a fix available
-                exit-code: "1"
+                  severity: HIGH,CRITICAL
+                  ignore-unfixed: true #only report/fail on vulnerabilities that have a fix available
+                  exit-code: "1"
+            #Runs the image we just scanned and tests it
+            - run: docker run -d --name app -p 127.0.0.1:8000:8000 devsecops-lab:${{ github.sha }}
+            - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+              with:
+                  python-version: "3.13"
+            - run: pip install --require-hashes -r requirements-dev.txt #only test tools, the app's dependencies are inside the image
+            - run: python -m pytest -v tests/test_container.py
+            - if: failure() #only runs when a previous step failed
+              run: docker logs app #shows why the app crashed
