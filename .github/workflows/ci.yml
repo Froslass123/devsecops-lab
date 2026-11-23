@@ -18,9 +18,13 @@ jobs: #define jobs
           - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
             with:
               python-version: "3.13"
+          #Runs to test if it builds
           - run: pip install --require-hashes -r requirements.txt #installs the dependencies, requiring their hashes
                                                                   #to avoid malicious builds
           - run: python -c "import app; print('ok')"
+          #Runs to test if the app works correctly
+          - run: pip install --require-hashes -r requirements-dev.txt #test tools (pytest), hashes required here too
+          - run: python -m pytest -v #a failing test makes pytest exit 1, which fails the job
     secrets-scan: #name of the job
         runs-on: ubuntu-latest
         steps:
