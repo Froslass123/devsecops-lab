@@ -12,7 +12,7 @@ def test_home_says_hello(client):
     response = client.get("/")
 
     assert response.status_code == 200
-    assert response.text == "hello"
+    assert response.text == "hi"
 
 
 def test_unknown_page_returns_404(client):
