@@ -9,7 +9,9 @@ WORKDIR /app
 
 #copy and install our dependencies
 COPY requirements.txt .
-RUN pip install --no-cache-dir --require-hashes -r requirements.txt
+RUN pip install --no-cache-dir --require-hashes -r requirements.txt \
+#remove pip after installing requirements  because its dependencies have unfixed CVEs and we don't need it anymore
+ && pip uninstall -y pip
 
 COPY app.py .
 
