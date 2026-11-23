@@ -53,7 +53,6 @@ jobs: #define jobs
                 scanners: vuln #only look for known vulnerabilities. Trivy can also look for secrets and misconfigurations; gitleaks already covers secrets.
                 severity: HIGH,CRITICAL #ignore LOW and MEDIUM vulnerabilities
                 exit-code: "1" #if anything is found, exit 1 and fail the job
-          - uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
     sast:
         runs-on: ubuntu-latest
         steps:
