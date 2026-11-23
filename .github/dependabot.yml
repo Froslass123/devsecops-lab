@@ -18,3 +18,9 @@ updates: #one entry per ecosystem to watch
       interval: "weekly"
     cooldown:
       default-days: 7
+    ignore:
+      - dependency-name: "python" #the base image in our Dockerfile
+        update-types: ["version-update:semver-major", "version-update:semver-minor"]
+        #ignores version bumps that would upgrade from python 3.13, our app uses that so we want to stay
+        #on 3.13, dependabot will still update 3.13 with newer security updates but it will skip minor
+        #updates like 3.13 -> 3.15
