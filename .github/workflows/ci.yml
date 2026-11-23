@@ -45,6 +45,8 @@ jobs: #define jobs
         steps:
           - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
           - uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+            env:
+                TRIVY_FILE_PATTERNS: 'pip:requirements-dev\.txt' #also check dependencies for our app testing environment, by default trivy only recognizes requirements.txt
             with:
                 scan-type: fs #used to scan the file system, default is image
                 scan-ref: . #scan the current folder
