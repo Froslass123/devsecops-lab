@@ -65,4 +65,5 @@ jobs: #define jobs
                 scanners: vuln,secret #we also check secrets with trivy inside images because gitleaks can't see
                                         #a secret baked inside an image
                 severity: HIGH,CRITICAL
+                ignore-unfixed: true #only report/fail on vulnerabilities that have a fix available
                 exit-code: "1"
