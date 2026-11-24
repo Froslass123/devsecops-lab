@@ -39,3 +39,16 @@ def test_does_not_run_as_root():
     result = subprocess.run(["docker", "exec", "app", "id", "-u"], capture_output=True, text=True, check=True)
 
     assert result.stdout.strip() != "0"
+
+def test_filesystem_is_read_only():
+    result = subprocess.run(["docker", "exec", "app", "touch", "/home/appuser/test"], capture_output=True, text=True)
+
+    assert "Read-only file system" in result.stderr
+
+
+def test_has_no_extra_privileges():
+    result = subprocess.run(["docker", "exec", "app", "cat", "/proc/1/status"], capture_output=True, text=True, check=True)
+    status = dict(line.split(":\t", 1) for line in result.stdout.splitlines() if ":\t" in line)
+
+    assert int(status["CapBnd"], 16) == 0 #the root powers (capabilities) the process could ever get, as a hex number. 0 means none.
+    assert status["NoNewPrivs"] == "1" #1 means it can't gain privileges, for example through sudo-style programs.
