@@ -85,7 +85,9 @@ jobs: #define jobs
                   ignore-unfixed: true #only report/fail on vulnerabilities that have a fix available
                   exit-code: "1"
             #Runs the image we just scanned and tests it
-            - run: docker run -d --name app -p 127.0.0.1:8000:8000 devsecops-lab:${{ github.sha }}
+            - run: docker compose up -d --no-build #run the image we just scanned, never rebuild it
+              env:
+                  TAG: ${{ github.sha }} #same tag as the docker build above
             - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
               with:
                   python-version: "3.13"

@@ -1,0 +1,16 @@
+services:
+    app:
+        build: . #build from the Dockerfile in this folder
+        image: devsecops-lab:${TAG:-dev} #TAG comes from the environment, "dev" if it isn't set
+        container_name: app
+        ports:
+            - "127.0.0.1:8000:8000"
+        read_only: true #nothing can be written to the image's filesystem
+        tmpfs:
+            - /tmp #except here: in memory, lost on stop. gunicorn needs it
+        cap_drop:
+            - ALL #remove every root power
+        security_opt:
+            - no-new-privileges:true
+        mem_limit: 256m #a memory leak or attack can't take the whole machine
+        pids_limit: 100 #stops fork bombs
