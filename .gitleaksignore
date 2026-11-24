@@ -2,4 +2,4 @@
 # Fake AWS keys committed on purpose on the test-secret branch to test secret detection.
 # Never real credentials, so nothing to revoke. A real leak must be revoked and rotated BEFORE being listed here.
 79955b62ffbc59a697484b75ad48a370c3af2853:app.py:aws-access-token:3
-97d0c3598be0e36f13a2fe80507849207bb3d8d4:app.py:aws-access-token:4
+#97d0c3598be0e36f13a2fe80507849207bb3d8d4:app.py:aws-access-token:4
