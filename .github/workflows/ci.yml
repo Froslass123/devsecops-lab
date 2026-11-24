@@ -40,7 +40,7 @@ jobs: #define jobs
             #this checks full commit history:
             #image pinned by digest (immutable); the tag is only a readable label, Docker ignores it when a digest is present
             - run: docker run --rm -v "$PWD:/repo" zricethezav/gitleaks:v8.30.1@sha256:c00b6bd0aeb3071cbcb79009cb16a60dd9e0a7c60e2be9ab65d25e6bc8abbb7f detect --source /repo -v
-    dependency-scan:
+    repo-scan: #scans both dependencies and iac
         runs-on: ubuntu-latest
         steps:
             - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -50,7 +50,7 @@ jobs: #define jobs
               with:
                   scan-type: fs #used to scan the file system, default is image
                   scan-ref: . #scan the current folder
-                  scanners: vuln #only look for known vulnerabilities. Trivy can also look for secrets and misconfigurations; gitleaks already covers secrets.
+                  scanners: vuln,misconfig #vuln: known vulnerabilities, misconfig: insecure settings in iac like Dockerfile
                   severity: HIGH,CRITICAL #ignore LOW and MEDIUM vulnerabilities
                   exit-code: "1" #if anything is found, exit 1 and fail the job
     sast:
