@@ -50,7 +50,7 @@ jobs: #define jobs
               with:
                   scan-type: fs #used to scan the file system, default is image
                   scan-ref: . #scan the current folder
-                  scanners: vuln #only look for known vulnerabilities. Trivy can also look for secrets and misconfigurations; gitleaks already covers secrets.
+                  scanners: vuln,misconfig #vuln: known vulnerabilities, misconfig: insecure settings in iac like Dockerfile
                   severity: HIGH,CRITICAL #ignore LOW and MEDIUM vulnerabilities
                   exit-code: "1" #if anything is found, exit 1 and fail the job
     sast:

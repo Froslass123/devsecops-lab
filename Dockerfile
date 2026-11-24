@@ -22,7 +22,7 @@ COPY app.py .
 
 #Create a new user instead of root, so if somebody take over the app it's harder to tamper/escape the container
 RUN useradd --create-home --uid 10001 appuser
-USER appuser
+#USER appuser
 
 #documents which port the app listens on and run gunicorn
 EXPOSE 8000
