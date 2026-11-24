@@ -109,6 +109,7 @@ jobs: #define jobs
                   docker_name: zaproxy/zap-stable:2.17.0@sha256:9624669db72f54d86c4b46a7064518bd9bf79d8c61a4c31befa9923489f328af
                   fail_action: true #fail the job on findings, off by default
                   allow_issue_writing: false #don't open github issues, our token is read-only
+                  rules_file_name: .zap/rules.tsv #accepted findings, each with its reason
             - if: failure()
               run: docker logs app
     workflow-scan: #scans the workflows themselves for insecure settings
