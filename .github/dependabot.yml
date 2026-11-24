@@ -24,3 +24,9 @@ updates: #one entry per ecosystem to watch
         #ignores version bumps that would upgrade from python 3.13, our app uses that so we want to stay
         #on 3.13, dependabot will still update 3.13 with newer security updates but it will skip minor
         #updates like 3.13 -> 3.15
+  - package-ecosystem: "pre-commit" #watch the hooks in .pre-commit-config.yaml
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    cooldown:
+      default-days: 7

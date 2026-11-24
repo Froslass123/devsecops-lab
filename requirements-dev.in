@@ -1,3 +1,4 @@
 #test tools only, never installed in the Docker image
 -c requirements.txt #constraint: if a package is in both files, use the production version
 pytest==9.2.0
+pre-commit==4.7.0 #runs checks on your pc before each commit
