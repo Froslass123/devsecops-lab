@@ -60,14 +60,6 @@ jobs: #define jobs
                   scanners: vuln,misconfig #vuln: known vulnerabilities, misconfig: insecure settings in iac like Dockerfile
                   severity: HIGH,CRITICAL #ignore LOW and MEDIUM vulnerabilities
                   exit-code: "1" #if anything is found, exit 1 and fail the job
-    sast: #Static Application Security Testing
-        runs-on: ubuntu-latest
-        steps:
-            - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-              with:
-                  persist-credentials: false
-            #Static Application Security Testing with Semgrep for dangerous patterns: SQL injection, command injection, insecure settings etc.
-            - run: docker run --rm -v "$PWD:/src" semgrep/semgrep:1.186.0-nonroot@sha256:9e7a5ea2466f5a9b7f308a1c6087ced2626b988869d432b326668578abf60944 semgrep scan --config p/python --config p/flask --error --metrics=off
     image-scan: #scans the docker image
         runs-on: ubuntu-latest
         steps:
@@ -95,6 +87,49 @@ jobs: #define jobs
             - run: python -m pytest -v tests/test_container.py
             - if: failure() #only runs when a previous step failed
               run: docker logs app #shows why the app crashed
+    sast: #Static Application Security Testing
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+              with:
+                  persist-credentials: false
+            #Sast with Semgrep for dangerous patterns: SQL injection, command injection, insecure settings etc.
+            - run: docker run --rm -v "$PWD:/src" semgrep/semgrep:1.186.0-nonroot@sha256:9e7a5ea2466f5a9b7f308a1c6087ced2626b988869d432b326668578abf60944 semgrep scan --config p/python --config p/flask --error --metrics=off
+    dast: #Dynamic Application Security Testing
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+              with:
+                  persist-credentials: false
+            - run: docker compose up -d --build --wait #--wait: continue only when the healthcheck passes
+            #scans the running app from outside with owsap zap
+            - uses: zaproxy/action-baseline@de8ad967d3548d44ef623df22cf95c3b0baf8b25 # v0.15.0
+              with:
+                  target: http://127.0.0.1:8000
+                  docker_name: zaproxy/zap-stable:2.17.0@sha256:9624669db72f54d86c4b46a7064518bd9bf79d8c61a4c31befa9923489f328af
+                  fail_action: true #fail the job on findings, off by default
+                  allow_issue_writing: false #don't open github issues, our token is read-only
+                  rules_file_name: .zap/rules.tsv #accepted findings, each with its reason
+            - if: failure()
+              run: docker logs app
+    dast-full: #attacks the running app with real payloads (SQL injection, XSS...), too slow for every PR
+        if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' #only at night or with the "Run workflow" button, too long to run on every pr
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+              with:
+                  persist-credentials: false
+            - run: docker compose up -d --build --wait
+            - uses: zaproxy/action-full-scan@3c58388149901b9a03b7718852c5ba889646c27c # v0.13.0
+              with:
+                  target: http://127.0.0.1:8000
+                  docker_name: zaproxy/zap-stable:2.17.0@sha256:9624669db72f54d86c4b46a7064518bd9bf79d8c61a4c31befa9923489f328af
+                  fail_action: true
+                  allow_issue_writing: false
+                  rules_file_name: .zap/rules.tsv
+                  artifact_name: zap_full_scan #dast uploads a report too, so they need different names
+            - if: failure()
+              run: docker logs app
     workflow-scan: #scans the workflows themselves for insecure settings
         runs-on: ubuntu-latest
         steps:

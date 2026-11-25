@@ -23,11 +23,11 @@ def wait_until_ready():
     pytest.fail("the container never answered on port 8000")
 
 
-def test_home_says_hello():
+def test_home_lists_the_notes():
     status, body = get("/")
 
     assert status == 200
-    assert body == "hello"
+    assert "hello there" in body
 
 def test_unknown_page_returns_404():
     status, body = get("/does-not-exist")

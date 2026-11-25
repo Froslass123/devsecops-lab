@@ -14,3 +14,8 @@ services:
             - no-new-privileges:true
         mem_limit: 256m #a memory leak or attack can't take the whole machine
         pids_limit: 100 #stops fork bombs
+        healthcheck: #how docker knows the app really works, not just that it started
+            test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/', timeout=2)"] #use Python because the slim image has no curl
+            interval: 2s #how often to check
+            timeout: 3s
+            retries: 10 #this many failures in a row = unhealthy

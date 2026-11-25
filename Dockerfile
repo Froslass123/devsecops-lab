@@ -19,6 +19,7 @@ RUN pip install --no-cache-dir --require-hashes -r requirements.txt \
  && pip uninstall -y pip
 
 COPY app.py .
+COPY templates templates
 
 #Create a new user instead of root, so if somebody take over the app it's harder to tamper/escape the container
 RUN useradd --create-home --uid 10001 appuser
