@@ -112,6 +112,24 @@ jobs: #define jobs
                   rules_file_name: .zap/rules.tsv #accepted findings, each with its reason
             - if: failure()
               run: docker logs app
+    dast-full: #attacks the running app with real payloads (SQL injection, XSS...), too slow for every PR
+        if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' #only at night or with the "Run workflow" button, too long to run on every pr
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+              with:
+                  persist-credentials: false
+            - run: docker compose up -d --build --wait
+            - uses: zaproxy/action-full-scan@3c58388149901b9a03b7718852c5ba889646c27c # v0.13.0
+              with:
+                  target: http://127.0.0.1:8000
+                  docker_name: zaproxy/zap-stable:2.17.0@sha256:9624669db72f54d86c4b46a7064518bd9bf79d8c61a4c31befa9923489f328af
+                  fail_action: true
+                  allow_issue_writing: false
+                  rules_file_name: .zap/rules.tsv
+                  artifact_name: zap_full_scan #dast uploads a report too, so they need different names
+            - if: failure()
+              run: docker logs app
     workflow-scan: #scans the workflows themselves for insecure settings
         runs-on: ubuntu-latest
         steps:
